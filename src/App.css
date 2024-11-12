@@ -51,7 +51,7 @@
 /* Question Container */
 .questions-container {
   margin-bottom: 10px;
-  max-height: 310px;
+  max-height: 360px;
   overflow-y: auto;
   padding-right: 10px; /* To ensure the scrollbar doesn't cover text */
   scroll-behavior: smooth; /* Smooth scrolling within the questions container */
@@ -91,6 +91,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 60px;
 
 }
 
