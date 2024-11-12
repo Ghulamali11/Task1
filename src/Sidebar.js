@@ -7,6 +7,7 @@ function Sidebar() {
     selectedChapter,
     selectedCategory,
     selectedQuestion,
+    expandedQuestionId, // To check which question is expanded
     handleChapterClick,
     handleCategoryClick,
     handleQuestionClick
@@ -23,7 +24,7 @@ function Sidebar() {
             {chapter.title}
           </div>
 
-          {/* Show categories if chapter is selected */}
+          {/* Show all questions under the selected chapter if chapter is selected */}
           {selectedChapter === chapter &&
             chapter.categories.map((category) => (
               <div key={category.id} style={{ marginLeft: '20px' }}>
@@ -43,7 +44,9 @@ function Sidebar() {
                       style={{
                         marginLeft: '40px',
                         cursor: 'pointer',
-                        color: selectedQuestion === question ? 'green' : 'black'
+                        color: selectedQuestion === question ? 'green' : 'black',
+                        fontWeight: expandedQuestionId === question.id ? 'bold' : 'normal',
+                        backgroundColor: expandedQuestionId === question.id ? '#e3f2fd' : 'transparent' // Highlight expanded question
                       }}
                     >
                       {question.text}
@@ -51,6 +54,26 @@ function Sidebar() {
                   ))}
               </div>
             ))}
+
+          {/* Show all questions directly under the selected chapter */}
+          {selectedChapter === chapter && selectedCategory === null &&
+            chapter.categories.map((category) =>
+              category.questions.map((question) => (
+                <div
+                  key={question.id}
+                  onClick={() => handleQuestionClick(question)}
+                  style={{
+                    marginLeft: '40px',
+                    cursor: 'pointer',
+                    color: selectedQuestion === question ? 'green' : 'black',
+                    fontWeight: expandedQuestionId === question.id ? 'bold' : 'normal',
+                    backgroundColor: expandedQuestionId === question.id ? '#e3f2fd' : 'transparent' // Highlight expanded question
+                  }}
+                >
+                  {question.text}
+                </div>
+              ))
+            )}
         </div>
       ))}
     </div>

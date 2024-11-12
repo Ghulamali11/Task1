@@ -6,8 +6,7 @@ function MainPanel() {
     selectedChapter,
     selectedCategory,
     expandedQuestionId,
-    handleQuestionClick,
-    setExpandedQuestionId
+    setExpandedQuestionId,
   } = useContext(AppContext);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,11 +15,11 @@ function MainPanel() {
   const [notes, setNotes] = useState({});
 
   // Determine questions to display
-  let questionsToDisplay = selectedCategory 
-    ? selectedCategory.questions 
-    : selectedChapter 
-      ? selectedChapter.categories.flatMap((category) => category.questions) 
-      : [];
+  let questionsToDisplay = selectedCategory
+    ? selectedCategory.questions
+    : selectedChapter
+    ? selectedChapter.categories.flatMap((category) => category.questions)
+    : [];
   const totalQuestions = questionsToDisplay.length;
   const totalPages = Math.ceil(totalQuestions / questionsPerPage);
   const startIndex = (currentPage - 1) * questionsPerPage;
@@ -28,25 +27,23 @@ function MainPanel() {
   const paginatedQuestions = questionsToDisplay.slice(startIndex, endIndex);
 
   const questionRefs = useRef({});
+  const sidebarRefs = useRef({});
 
   // Intersection Observer to expand the first visible question in the viewport
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const visibleEntries = entries.filter(entry => entry.isIntersecting);
+        // Filter entries that are fully in the viewport
+        const visibleEntries = entries.filter((entry) => entry.intersectionRatio === 1);
         if (visibleEntries.length > 0) {
-          // Sort visible entries by their position in the viewport (top to bottom)
-          const sortedEntries = visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-          const firstVisibleEntry = sortedEntries[0];
+          const firstVisibleEntry = visibleEntries[0];
           const questionId = parseInt(firstVisibleEntry.target.getAttribute('data-id'));
-          
-          // Set the expanded question to the first fully visible one
+
+          // Expand only the question that is fully in view
           setExpandedQuestionId(questionId);
         }
       },
-      { threshold:1 
-        
-      } // Trigger only when 100% of the question is in view
+      { threshold: 1 } // Ensure the question is 100% in view before triggering
     );
 
     // Observe each question
@@ -54,13 +51,37 @@ function MainPanel() {
       if (questionRef) observer.observe(questionRef);
     });
 
-    // Cleanup the observer
     return () => {
       Object.values(questionRefs.current).forEach((questionRef) => {
         if (questionRef) observer.unobserve(questionRef);
       });
     };
   }, [paginatedQuestions, setExpandedQuestionId]);
+
+  // Auto-scroll sidebar to the category of the expanded question
+  useEffect(() => {
+    if (expandedQuestionId) {
+      // Find the expanded question in the selected category
+      const expandedQuestion = questionsToDisplay.find(
+        (question) => question.id === expandedQuestionId
+      );
+
+      if (expandedQuestion) {
+        // Find the category containing the expanded question
+        const category = selectedCategory || selectedChapter.categories.find((cat) =>
+          cat.questions.some((question) => question.id === expandedQuestionId)
+        );
+
+        // Find the corresponding category element in the sidebar
+        const categoryElement = sidebarRefs.current[category.id];
+
+        if (categoryElement) {
+          // Scroll the category into view in the sidebar
+          categoryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  }, [expandedQuestionId, questionsToDisplay, selectedCategory, selectedChapter]);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -94,7 +115,6 @@ function MainPanel() {
             style={{ marginBottom: '15px' }}
           >
             <div
-              onClick={() => handleQuestionClick(question)}
               style={{
                 cursor: 'pointer',
                 color: expandedQuestionId === question.id ? 'green' : 'black',
